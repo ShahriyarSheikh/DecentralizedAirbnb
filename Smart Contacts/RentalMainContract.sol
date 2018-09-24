@@ -56,6 +56,14 @@ contract RentalMainContract{
         currentRentOffersTradeHash.push(tradeHash);
         emit RentOfferPlaced(msg.sender, tradeHash);
     }
+
+    function modifyRentOffer(bytes32 rentedPlaceHash, bytes32 placeDetailsHash){
+        
+    }
+    
+    function deleteRentOffer(bytes32 rentedPlaceHash){
+        
+    }
     
     
     
