@@ -59,13 +59,13 @@ contract RentalMainContract{
         emit RentOfferPlaced(msg.sender, tradeHash);
     }
 
-    function modifyRentOffer(bytes32 rentedOfferHash ,                                                         ,
+    function modifyRentOffer(bytes32 rentedOfferHash,
                                 uint offeredQuantityInETH, 
                                uint startDate, 
                                 uint endDate,
                                 address arbitratorAddress, 
                                 bytes32 placeDetailsHash,
-                                uint arbitratorFees) external {
+                              uint arbitratorFees) external {
             
         require(rentals[rentedOfferHash].renterAddress == msg.sender);
         require(rentals[rentedOfferHash].renteeAddress == address(0));
@@ -84,9 +84,21 @@ contract RentalMainContract{
        
 
     }    
-    function deleteRentOffer(bytes32 rentedPlaceHash){
+    function deleteRentOffer(bytes32 rentedOfferHash) external {
+             
+              require(rentals[rentedOfferHash].renterAddress == msg.sender);
+              require(rentals[rentedOfferHash].renteeAddress == address(0));
+              delete rentals[rentedOfferHash];
+              deleteRentOfferTradeHash(rentedOfferHash);
         
     }
+     
+     function deleteRentOfferTradeHash (bytes32 deleteRentOfferTradeHash){
+          bytes32 rentedHashAtLastIndex = currentRentOffersTradeHash[currentRentOffersTradeHash.length-1];
+         currentRentOffersTradeHash[tradeHashIndexes[deleteRentOfferTradeHash]] = rentedHashAtLastIndex ;
+         delete tradeHashIndexes[deleteRentOfferTradeHash];
+         currentRentOffersTradeHash.length--;
+     }
     
     
     
