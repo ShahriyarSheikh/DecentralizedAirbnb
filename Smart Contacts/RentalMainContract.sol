@@ -12,6 +12,7 @@ contract RentalMainContract{
     bytes32[] currentRentOffersTradeHash;
     
     
+     mapping (bytes32 => uint) private tradeHashIndexes; // address to position 
     mapping(bytes32 => RentalOffer) rentals;
     
     struct RentalOffer{
@@ -54,13 +55,35 @@ contract RentalMainContract{
         offer.arbitratorAddress = arbitratorAddress;
         offer.arbitratorFee = arbitratorFees;
         currentRentOffersTradeHash.push(tradeHash);
+        tradeHashIndexes[tradeHash] = currentRentOffersTradeHash.length - 1 ; // storing the position of Address from currentRentOffersTradeHash 
         emit RentOfferPlaced(msg.sender, tradeHash);
     }
 
-    function modifyRentOffer(bytes32 rentedPlaceHash, bytes32 placeDetailsHash){
+    function modifyRentOffer(bytes32 rentedOfferHash ,                                                         ,
+                                uint offeredQuantityInETH, 
+                               uint startDate, 
+                                uint endDate,
+                                address arbitratorAddress, 
+                                bytes32 placeDetailsHash,
+                                uint arbitratorFees) external {
+            
+        require(rentals[rentedOfferHash].renterAddress == msg.sender);
+        require(rentals[rentedOfferHash].renteeAddress == address(0));
+        if(rentals[rentedOfferHash].renterAddress != address(0)) revert();
+            
+        bytes32 newRentedOfferHash = keccak256(msg.sender, now, offeredQuantityInETH, address(0), startDate, endDate,placeDetailsHash, "Modify");
+            
+        RentalOffer storage rentOffer = rentals[newRentedOfferHash];
         
-    }
-    
+        rentOffer.offeredQuantityInETH = offeredQuantityInETH;
+        rentOffer.renterAddress = msg.sender;
+        rentOffer.arbitratorAddress = arbitratorAddress;
+        rentOffer.arbitratorFee = arbitratorFees;
+        currentRentOffersTradeHash[tradeHashIndexes[rentedOfferHash ]] = newRentedOfferHash;
+        
+       
+
+    }    
     function deleteRentOffer(bytes32 rentedPlaceHash){
         
     }
