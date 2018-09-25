@@ -12,7 +12,7 @@ contract RentalMainContract{
     bytes32[] currentRentOffersTradeHash;
     
     
-     mapping (bytes32 => uint) private tradeHashIndexes; // address to position 
+    mapping (bytes32 => uint) private tradeHashIndexes; // address to position 
     mapping(bytes32 => RentalOffer) rentals;
     
     struct RentalOffer{
@@ -26,7 +26,7 @@ contract RentalMainContract{
         bytes32 placeDetailsHash;
     }
     
-    constructor(address tokenAddress, address hotWalletAddress, uint commissionFees) public {
+    function RentalMainContract(address tokenAddress, address hotWalletAddress, uint commissionFees){
         _ownerOfContract = msg.sender;
         _tokenAddress = tokenAddress;
         _hotWalletAddress = hotWalletAddress;
@@ -60,12 +60,12 @@ contract RentalMainContract{
     }
 
     function modifyRentOffer(bytes32 rentedOfferHash,
-                                uint offeredQuantityInETH, 
-                               uint startDate, 
-                                uint endDate,
-                                address arbitratorAddress, 
-                                bytes32 placeDetailsHash,
-                              uint arbitratorFees) external {
+                            uint offeredQuantityInETH, 
+                            uint startDate, 
+                            uint endDate,
+                            address arbitratorAddress, 
+                            bytes32 placeDetailsHash,
+                             uint arbitratorFees) external {
             
         require(rentals[rentedOfferHash].renterAddress == msg.sender);
         require(rentals[rentedOfferHash].renteeAddress == address(0));
@@ -84,6 +84,7 @@ contract RentalMainContract{
        
 
     }    
+    
     function deleteRentOffer(bytes32 rentedOfferHash) external {
              
               require(rentals[rentedOfferHash].renterAddress == msg.sender);
@@ -93,11 +94,11 @@ contract RentalMainContract{
         
     }
      
-     function deleteRentOfferTradeHash (bytes32 deleteRentOfferTradeHash){
-          bytes32 rentedHashAtLastIndex = currentRentOffersTradeHash[currentRentOffersTradeHash.length-1];
-         currentRentOffersTradeHash[tradeHashIndexes[deleteRentOfferTradeHash]] = rentedHashAtLastIndex ;
-         delete tradeHashIndexes[deleteRentOfferTradeHash];
-         currentRentOffersTradeHash.length--;
+    function deleteRentOfferTradeHash (bytes32 deleteRentOfferTradeHash){
+        bytes32 rentedHashAtLastIndex = currentRentOffersTradeHash[currentRentOffersTradeHash.length-1];
+        currentRentOffersTradeHash[tradeHashIndexes[deleteRentOfferTradeHash]] = rentedHashAtLastIndex ;
+        delete tradeHashIndexes[deleteRentOfferTradeHash];
+        currentRentOffersTradeHash.length--;
      }
     
     
