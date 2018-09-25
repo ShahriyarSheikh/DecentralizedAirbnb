@@ -2,17 +2,16 @@ pragma solidity ^0.4.16;
 
 contract RentalMainContract{
     
-    event RentOfferPlaced(address indexed caller, bytes32 indexed tradeHash);
+    event RentOfferPlaced(address indexed caller, bytes32 indexed rentOfferHash);
     
     address _ownerOfContract;
     address _tokenAddress;
     address _hotWalletAddress;
     uint _commissionFees;
     
-    bytes32[] currentRentOffersTradeHash;
+    bytes32[] currentRentOffersHash;
     
-    
-    mapping (bytes32 => uint) private tradeHashIndexes; // address to position 
+    mapping (bytes32 => uint) private rentOfferIndexes; // address to position 
     mapping(bytes32 => RentalOffer) rentals;
     
     struct RentalOffer{
@@ -25,7 +24,6 @@ contract RentalMainContract{
         uint endDate;
         bytes32 placeDetailsHash;
     }
-    
     
     function RentalMainContract(address tokenAddress, address hotWalletAddress, uint commissionFees){
         _ownerOfContract = msg.sender;
@@ -42,22 +40,22 @@ contract RentalMainContract{
                             bytes32 placeDetailsHash,
                             uint arbitratorFees) external {
                                 
-        bytes32 tradeHash = keccak256(msg.sender, now, offeredQuantityInETH, renteeAddress, startDate, endDate,placeDetailsHash, "Sell");
+        bytes32 rentOfferHash = keccak256(msg.sender, now, offeredQuantityInETH, renteeAddress, startDate, endDate,placeDetailsHash, "Sell");
         
-        if(rentals[tradeHash].renterAddress != address(0)) revert();
+        if(rentals[rentOfferHash].renterAddress != address(0)) revert();
         
         //Proper date validations
-        if(rentals[tradeHash].startDate < now) revert();
+        if(rentals[rentOfferHash].startDate < now) revert();
         
-        RentalOffer storage offer = rentals[tradeHash];
+        RentalOffer storage offer = rentals[rentOfferHash];
        
         offer.offeredQuantityInETH = offeredQuantityInETH;
         offer.renterAddress = msg.sender;
         offer.arbitratorAddress = arbitratorAddress;
         offer.arbitratorFee = arbitratorFees;
-        currentRentOffersTradeHash.push(tradeHash);
-        tradeHashIndexes[tradeHash] = currentRentOffersTradeHash.length - 1 ; // storing the position of Address from currentRentOffersTradeHash 
-        emit RentOfferPlaced(msg.sender, tradeHash);
+        currentRentOffersHash.push(rentOfferHash);
+        rentOfferIndexes[rentOfferHash] = currentRentOffersHash.length - 1 ; // storing the position of Address from currentRentOffersTradeHash 
+        emit RentOfferPlaced(msg.sender, rentOfferHash);
     }
 
     function modifyRentOffer(bytes32 rentedOfferHash,
@@ -80,28 +78,24 @@ contract RentalMainContract{
         rentOffer.renterAddress = msg.sender;
         rentOffer.arbitratorAddress = arbitratorAddress;
         rentOffer.arbitratorFee = arbitratorFees;
-        currentRentOffersTradeHash[tradeHashIndexes[rentedOfferHash ]] = newRentedOfferHash;
-        
-       
+        currentRentOffersHash[rentOfferIndexes[rentedOfferHash]] = newRentedOfferHash;
 
     }    
     
     function deleteRentOffer(bytes32 rentedOfferHash) external {
              
-              require(rentals[rentedOfferHash].renterAddress == msg.sender);
-              require(rentals[rentedOfferHash].renteeAddress == address(0));
-              delete rentals[rentedOfferHash];
-              deleteRentOfferTradeHash(rentedOfferHash);
+        require(rentals[rentedOfferHash].renterAddress == msg.sender);
+        require(rentals[rentedOfferHash].renteeAddress == address(0));
+        delete rentals[rentedOfferHash];
+        deleteRentOfferHash(rentedOfferHash);
         
     }
      
-    function deleteRentOfferTradeHash (bytes32 deleteRentOfferTradeHash){
-        bytes32 rentedHashAtLastIndex = currentRentOffersTradeHash[currentRentOffersTradeHash.length-1];
-        currentRentOffersTradeHash[tradeHashIndexes[deleteRentOfferTradeHash]] = rentedHashAtLastIndex ;
-        delete tradeHashIndexes[deleteRentOfferTradeHash];
-        currentRentOffersTradeHash.length--;
+    function deleteRentOfferHash (bytes32 deleteRentOfferTradeHash){
+        bytes32 rentedHashAtLastIndex = currentRentOffersHash[currentRentOffersHash.length-1];
+        currentRentOffersHash[rentOfferIndexes[deleteRentOfferTradeHash]] = rentedHashAtLastIndex ;
+        delete rentOfferIndexes[deleteRentOfferTradeHash];
+        currentRentOffersHash.length--;
      }
-    
-    
     
 }
