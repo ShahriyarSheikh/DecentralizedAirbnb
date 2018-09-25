@@ -26,6 +26,7 @@ contract RentalMainContract{
         bytes32 placeDetailsHash;
     }
     
+    
     function RentalMainContract(address tokenAddress, address hotWalletAddress, uint commissionFees){
         _ownerOfContract = msg.sender;
         _tokenAddress = tokenAddress;
