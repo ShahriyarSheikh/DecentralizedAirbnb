@@ -1,0 +1,21 @@
+<div style=" margin: 20px 0 0 20px;" >
+<button (click)="enableListing()" color="primary" >Add</button>
+<button  (click)= "enableModify()"  > Modify </button>
+<button (click)="enableRemove()" > Remove </button>
+
+<div *ngIf="isAdd">
+    <app-add-listing></app-add-listing> 
+
+</div>
+
+<div *ngIf="isAdd1">
+    <app-modify-listing></app-modify-listing> 
+
+</div>
+
+<div *ngIf="isAdd2">
+    <app-remove-listing></app-remove-listing> 
+
+</div>
+
+</div>
