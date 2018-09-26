@@ -25,7 +25,7 @@ contract RentalMainContract{
         bytes32 placeDetailsHash;
     }
     
-    function RentalMainContract(address tokenAddress, address hotWalletAddress, uint commissionFees){
+    constructor(address tokenAddress, address hotWalletAddress, uint commissionFees) public{
         _ownerOfContract = msg.sender;
         _tokenAddress = tokenAddress;
         _hotWalletAddress = hotWalletAddress;
@@ -40,7 +40,7 @@ contract RentalMainContract{
                             bytes32 placeDetailsHash,
                             uint arbitratorFees) external {
                                 
-        bytes32 rentOfferHash = keccak256(msg.sender, now, offeredQuantityInETH, renteeAddress, startDate, endDate,placeDetailsHash, "Sell");
+        bytes32 rentOfferHash = keccak256(abi.encodePacked(msg.sender, now, offeredQuantityInETH, renteeAddress, startDate, endDate,placeDetailsHash, "Sell"));
         
         if(rentals[rentOfferHash].renterAddress != address(0)) revert();
         
@@ -70,7 +70,7 @@ contract RentalMainContract{
         require(rentals[rentedOfferHash].renteeAddress == address(0));
         if(rentals[rentedOfferHash].renterAddress != address(0)) revert();
             
-        bytes32 newRentedOfferHash = keccak256(msg.sender, now, offeredQuantityInETH, address(0), startDate, endDate,placeDetailsHash, "Modify");
+        bytes32 newRentedOfferHash = keccak256(abi.encodePacked(msg.sender, now, offeredQuantityInETH, address(0), startDate, endDate,placeDetailsHash, "Modify"));
             
         RentalOffer storage rentOffer = rentals[newRentedOfferHash];
         
@@ -91,11 +91,11 @@ contract RentalMainContract{
         
     }
      
-    function deleteRentOfferHash (bytes32 deleteRentOfferTradeHash){
+    function deleteRentOfferHash (bytes32 deleteRentOfferTradeHash) private{
         bytes32 rentedHashAtLastIndex = currentRentOffersHash[currentRentOffersHash.length-1];
         currentRentOffersHash[rentOfferIndexes[deleteRentOfferTradeHash]] = rentedHashAtLastIndex ;
         delete rentOfferIndexes[deleteRentOfferTradeHash];
         currentRentOffersHash.length--;
-     }
+    }
     
 }
