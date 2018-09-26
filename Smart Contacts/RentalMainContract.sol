@@ -2,21 +2,19 @@ pragma solidity ^0.4.16;
 
 contract RentalMainContract{
     
-    event RentOfferPlaced(address indexed caller, bytes32 indexed rentOfferHash);
-    event RentOfferModified(address indexed caller, bytes32 indexed rentOfferHash);
-    
+    //Private variables
     address _ownerOfContract;
     address _tokenAddress;
     address _hotWalletAddress;
     uint _commissionFees;
     
-    bytes32[] currentRentOffersHash;
+    // Events
+    event RentOfferPlaced(address indexed caller, bytes32 indexed rentOfferHash);
+    event RentOfferModified(address indexed caller, bytes32 indexed rentOfferHash);
     
-    mapping (bytes32 => uint) private rentOfferIndexes; // address to position 
-    mapping(bytes32 => RentalOffer) rentals;
-    
+    //Models
     struct RentalOffer{
-        uint offeredQuantityInETH;
+        uint offeredQuantity;
         address renterAddress;
         address arbitratorAddress;
         uint arbitratorFee;
@@ -25,6 +23,26 @@ contract RentalMainContract{
         bytes32 placeDetailsHash;
     }
     
+    struct RenteeInfo{
+        address addressOfRentee;
+        uint startTimeOfRent;
+        uint endTimeOfRent;
+    }
+    
+    struct RegisteredRenter{
+        address addressOfRenter;
+        bytes32 renterDetails;
+    }
+    
+    bytes32[] currentRentOffersHash;
+    
+    mapping (bytes32 => uint) private rentOfferIndexes; // address to position 
+    mapping(bytes32 => RentalOffer) rentals;
+    //Stores info of all the current rentee details of a particular offer
+    mapping(bytes32 => RenteeInfo[]) rentalsTaken;
+    //Stores all the details of the registered renter;
+    mapping(address=> RegisteredRenter) registeredRenter;
+   
     constructor(address tokenAddress, address hotWalletAddress, uint commissionFees) public{
         _ownerOfContract = msg.sender;
         _tokenAddress = tokenAddress;
@@ -32,22 +50,27 @@ contract RentalMainContract{
         _commissionFees = commissionFees;
     }
     
-    function placeRentOffer(uint offeredQuantityInETH, 
+    function placeRentOffer(uint offeredQuantity, 
                             uint startDate, 
                             uint endDate,
                             address arbitratorAddress, 
                             bytes32 placeDetailsHash,
                             uint arbitratorFees) external {
+                                
+        //TO CHECK IF THE OFFER IS PLACED by a registerd renter                        
+        require(registeredRenter[msg.sender].addressOfRenter == msg.sender);
         
-        bytes32 rentOfferHash = keccak256(abi.encodePacked(msg.sender, now, offeredQuantityInETH, startDate, endDate,placeDetailsHash, "Sell"));
+        bytes32 rentOfferHash = keccak256(abi.encodePacked(msg.sender, now, offeredQuantity, startDate, endDate,placeDetailsHash, "Sell"));
         
+        //If Same order is allready placed then it cannot be placed again
         if(rentals[rentOfferHash].renterAddress != address(0)) revert();
+       
         
         //Date validations
-        if(startDate < now || endDate < now ) revert();
+        require(startDate > now && now < endDate);
         if(startDate >= endDate ) revert();
         
-        rentals[rentOfferHash].offeredQuantityInETH = offeredQuantityInETH;
+        rentals[rentOfferHash].offeredQuantity = offeredQuantity;
         rentals[rentOfferHash].renterAddress = msg.sender;
         rentals[rentOfferHash].arbitratorAddress = arbitratorAddress;
         rentals[rentOfferHash].arbitratorFee = arbitratorFees;
@@ -62,7 +85,7 @@ contract RentalMainContract{
     }
 
     function modifyRentOffer(bytes32 rentedOfferHash,
-                             uint offeredQuantityInETH, 
+                             uint offeredQuantity, 
                              uint startDate, 
                              uint endDate,
                              address arbitratorAddress, 
@@ -74,15 +97,12 @@ contract RentalMainContract{
         require(rentals[rentedOfferHash].renterAddress == msg.sender);
         
         //To check whether the place is already rented
-        //require(rentals[rentedOfferHash].renteeAddress == address(0));
+        require(rentalsTaken[rentedOfferHash].length == 0);
         
-        if(rentals[rentedOfferHash].renterAddress != address(0)) revert();
-            
-        bytes32 newRentedOfferHash = keccak256(abi.encodePacked(msg.sender, now, offeredQuantityInETH, address(0), startDate, endDate,placeDetailsHash, "Modify"));
+        bytes32 newRentedOfferHash = keccak256(abi.encodePacked(msg.sender, now, offeredQuantity, address(0), startDate, endDate,placeDetailsHash, "Modify"));
             
         RentalOffer storage rentOffer = rentals[newRentedOfferHash];
-        
-        rentOffer.offeredQuantityInETH = offeredQuantityInETH;
+        rentOffer.offeredQuantity = offeredQuantity;
         rentOffer.renterAddress = msg.sender;
         rentOffer.arbitratorAddress = arbitratorAddress;
         rentOffer.arbitratorFee = arbitratorFees;
@@ -95,7 +115,9 @@ contract RentalMainContract{
     function deleteRentOffer(bytes32 rentedOfferHash) external {
              
         require(rentals[rentedOfferHash].renterAddress == msg.sender);
-        //require(rentals[rentedOfferHash].renteeAddress == address(0));
+        //To check whether the place is already rented
+        require(rentalsTaken[rentedOfferHash].length == 0);
+        
         delete rentals[rentedOfferHash];
         deleteRentOfferHash(rentedOfferHash);
         
