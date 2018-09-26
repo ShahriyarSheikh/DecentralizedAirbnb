@@ -3,6 +3,7 @@ pragma solidity ^0.4.16;
 contract RentalMainContract{
     
     event RentOfferPlaced(address indexed caller, bytes32 indexed rentOfferHash);
+    event RentOfferModified(address indexed caller, bytes32 indexed rentOfferHash);
     
     address _ownerOfContract;
     address _tokenAddress;
@@ -17,7 +18,6 @@ contract RentalMainContract{
     struct RentalOffer{
         uint offeredQuantityInETH;
         address renterAddress;
-        address renteeAddress;
         address arbitratorAddress;
         uint arbitratorFee;
         uint startDate;
@@ -33,41 +33,49 @@ contract RentalMainContract{
     }
     
     function placeRentOffer(uint offeredQuantityInETH, 
-                            address renteeAddress, 
                             uint startDate, 
                             uint endDate,
                             address arbitratorAddress, 
                             bytes32 placeDetailsHash,
                             uint arbitratorFees) external {
-                                
-        bytes32 rentOfferHash = keccak256(abi.encodePacked(msg.sender, now, offeredQuantityInETH, renteeAddress, startDate, endDate,placeDetailsHash, "Sell"));
+        
+        bytes32 rentOfferHash = keccak256(abi.encodePacked(msg.sender, now, offeredQuantityInETH, startDate, endDate,placeDetailsHash, "Sell"));
         
         if(rentals[rentOfferHash].renterAddress != address(0)) revert();
         
-        //Proper date validations
-        if(rentals[rentOfferHash].startDate < now) revert();
+        //Date validations
+        if(startDate < now || endDate < now ) revert();
+        if(startDate >= endDate ) revert();
         
-        RentalOffer storage offer = rentals[rentOfferHash];
-       
-        offer.offeredQuantityInETH = offeredQuantityInETH;
-        offer.renterAddress = msg.sender;
-        offer.arbitratorAddress = arbitratorAddress;
-        offer.arbitratorFee = arbitratorFees;
+        rentals[rentOfferHash].offeredQuantityInETH = offeredQuantityInETH;
+        rentals[rentOfferHash].renterAddress = msg.sender;
+        rentals[rentOfferHash].arbitratorAddress = arbitratorAddress;
+        rentals[rentOfferHash].arbitratorFee = arbitratorFees;
+        
+        //An array that keep tracks of the current rent offers by hash
         currentRentOffersHash.push(rentOfferHash);
-        rentOfferIndexes[rentOfferHash] = currentRentOffersHash.length - 1 ; // storing the position of Address from currentRentOffersTradeHash 
+        
+        // storing the position of Address from currentRentOffersTradeHash
+        rentOfferIndexes[rentOfferHash] = currentRentOffersHash.length - 1 ;  
+        
         emit RentOfferPlaced(msg.sender, rentOfferHash);
     }
 
     function modifyRentOffer(bytes32 rentedOfferHash,
-                            uint offeredQuantityInETH, 
-                            uint startDate, 
-                            uint endDate,
-                            address arbitratorAddress, 
-                            bytes32 placeDetailsHash,
+                             uint offeredQuantityInETH, 
+                             uint startDate, 
+                             uint endDate,
+                             address arbitratorAddress, 
+                             
+                             bytes32 placeDetailsHash,
                              uint arbitratorFees) external {
-            
+        
+        //To check that the owner is modifying the offer    
         require(rentals[rentedOfferHash].renterAddress == msg.sender);
-        require(rentals[rentedOfferHash].renteeAddress == address(0));
+        
+        //To check whether the place is already rented
+        //require(rentals[rentedOfferHash].renteeAddress == address(0));
+        
         if(rentals[rentedOfferHash].renterAddress != address(0)) revert();
             
         bytes32 newRentedOfferHash = keccak256(abi.encodePacked(msg.sender, now, offeredQuantityInETH, address(0), startDate, endDate,placeDetailsHash, "Modify"));
@@ -79,13 +87,15 @@ contract RentalMainContract{
         rentOffer.arbitratorAddress = arbitratorAddress;
         rentOffer.arbitratorFee = arbitratorFees;
         currentRentOffersHash[rentOfferIndexes[rentedOfferHash]] = newRentedOfferHash;
+        
+        emit RentOfferModified(msg.sender,newRentedOfferHash);
 
     }    
     
     function deleteRentOffer(bytes32 rentedOfferHash) external {
              
         require(rentals[rentedOfferHash].renterAddress == msg.sender);
-        require(rentals[rentedOfferHash].renteeAddress == address(0));
+        //require(rentals[rentedOfferHash].renteeAddress == address(0));
         delete rentals[rentedOfferHash];
         deleteRentOfferHash(rentedOfferHash);
         
@@ -99,3 +109,13 @@ contract RentalMainContract{
     }
     
 }
+
+
+
+/*
+Docs:
+Role: Renter
+When a renter places a listing, the required information should be address, currentDate, offered quantity in eth,
+start date, end date, the hash of the place details and the nature of the order i.e. sell or buy
+
+*/
