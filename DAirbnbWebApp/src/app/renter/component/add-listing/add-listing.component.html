@@ -57,9 +57,9 @@
 
         <tr *ngFor="let rooms of roomtype ">
           <td>
-            <input type="checkbox"  [value]="rooms" formControlName="rooms" >
+            <input type="checkbox" (change)="changeCheckbox(rooms)"  formControlName="rooms" >
           </td>
-          <td>{{ rooms }}</td>
+          <td>{{ rooms.value }}</td>
 
         </tr>
       </tbody>
@@ -73,9 +73,9 @@
 
         <tr  *ngFor="let facility of facilities ">
           <td>
-            <input type="checkbox"  [value]="facility" formControlName="facility" >
+            <input type="checkbox" (change)="changeCheckbox(facility)"  formControlName="facility" >
           </td>
-          <td>{{ facility }}</td>
+          <td>{{ facility.value }}</td>
 
         </tr>
       </tbody>
@@ -91,9 +91,9 @@
 
         <tr *ngFor="let aments of amentities ">
           <td>
-            <input type="checkbox"   [value]="aments" formControlName="aments">
+            <input type="checkbox"  (change)="changeCheckbox(aments)" formControlName="aments">
           </td>
-          <td>{{ aments }}</td>
+          <td>{{ aments.value }}</td>
 
         </tr>
       </tbody>
@@ -109,9 +109,9 @@
 
         <tr *ngFor="let proper of property ">
           <td>
-            <input type="checkbox"   [value]="proper" formControlName="proper">
+            <input type="checkbox"  (change)="changeCheckbox(proper)" formControlName="proper">
           </td>
-          <td>{{ proper }}</td>
+          <td>{{ proper.value }}</td>
 
         </tr>
       </tbody>
@@ -127,9 +127,9 @@
 
         <tr *ngFor="let rule of rules ">
           <td>
-            <input type="checkbox"  [value]="rule" formControlName="rule">
+            <input type="checkbox"  (change)="changeCheckbox(rule)" formControlName="rule">
           </td>
-          <td>{{ rule }}</td>
+          <td>{{ rule.value }}</td>
 
         </tr>
       </tbody>
@@ -145,9 +145,9 @@
 
         <tr *ngFor="let lang of language ">
           <td>
-            <input type="checkbox"   [value]="lang" formControlName="lang">
+            <input type="checkbox"  (change)="changeCheckbox(lang)"  [value]="lang" formControlName="lang">
           </td>
-          <td>{{ lang }}</td>
+          <td>{{ lang.value }}</td>
 
         </tr>
       </tbody>
@@ -155,7 +155,8 @@
     </div>
 
     <br>
-    <button type="submit" [disabled]="!renterForm.valid" >submit</button>
+    <button type="submit" >submit</button>
+    <!-- <button type="submit" [disabled]="!renterForm.valid" >submit</button> -->
   </div>
   </form>
   
