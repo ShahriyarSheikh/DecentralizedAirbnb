@@ -1,4 +1,4 @@
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.24;
 
 import "./RentalEscrowContract.sol";
 
@@ -26,7 +26,7 @@ library SystemDateTime{
 
 contract RentalMainContract{
     
-    //Private variables
+    /* Private Variables */
     address private _ownerOfContract;
     
     /* Events */
@@ -105,7 +105,7 @@ contract RentalMainContract{
     function registerRenter(address renterAddress, bytes32 renterDetailsHash) external{
         
         //This is useless i think, just need to ensure that the user cannot register someone else.
-        require(renterAddress == msg.sender);
+        require(renterAddress == msg.sender,"Current user cannot register someone else");
         
         //user allready registered
         if(registeredRenter[renterAddress].addressOfRenter == msg.sender){
@@ -127,16 +127,16 @@ contract RentalMainContract{
                             uint arbitratorFees) external {
                                 
         //TO CHECK IF THE OFFER IS PLACED by a registerd renter                        
-        require(registeredRenter[msg.sender].addressOfRenter == msg.sender);
+        require(registeredRenter[msg.sender].addressOfRenter == msg.sender,"Not a registered renter");
         
         //Date validations
-        require(startDate > now && now < endDate);
-        if(startDate >= endDate ) revert();
+        require(startDate > now && now < endDate,"Invalid date entry");
+        require(startDate < endDate,"Starting date cannot be greater than ending date");
         
         bytes32 rentOfferHash = keccak256(abi.encodePacked(msg.sender, offeredQuantity, startDate, endDate,placeDetailsHash, "Sell"));
         
         //If Same order is allready placed then it cannot be placed again
-        if(rentals[rentOfferHash].placeDetailsHash == placeDetailsHash) revert();
+        require(rentals[rentOfferHash].placeDetailsHash != placeDetailsHash,"Same rent offer cannot be placed twice");
        
         rentals[rentOfferHash].offeredQuantity = offeredQuantity;
         rentals[rentOfferHash].renterAddress = msg.sender;
