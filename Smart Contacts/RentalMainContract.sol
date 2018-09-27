@@ -25,17 +25,16 @@ library SystemDateTime{
 contract RentalMainContract{
     
     //Private variables
-    address _ownerOfContract;
-    address _tokenAddress;
-    address _hotWalletAddress;
-    uint _commissionFees;
+    address private _ownerOfContract;
     
-    // Events
+    /* Events */
     event RentOfferPlaced(address indexed caller, bytes32 indexed rentOfferHash);
     event RentOfferModified(address indexed caller, bytes32 indexed rentOfferHash);
     event RegisterRenter(address indexed caller, bool indexed registrationStatus);
+    event ArbitratorAdded(address indexed caller, address indexed _arbitratorAddress);
+    event ArbitratorDeleted(address indexed caller, address indexed _arbitratorAddressDeleted);
     
-    //Models
+    /* Models */
     struct RentalOffer{
         uint offeredQuantity;
         address renterAddress;
@@ -57,23 +56,42 @@ contract RentalMainContract{
         bytes32 renterDetails;
     }
     
+    /* List of */
     bytes32[] currentRentOffersHash;
+    address[] arbitrators;
     
-    mapping (bytes32 => uint) private rentOfferIndexes; // address to position 
+    /* Mapping */
+    // address to position 
+    mapping (bytes32 => uint) private rentOfferIndexes; 
+    // Stores individual rent offers w.r.t hash
     mapping(bytes32 => RentalOffer) rentals;
     //Stores info of all the current rentee details of a particular offer
     mapping(bytes32 => RenteeInfo[]) rentalsTaken;
     //Stores all the details of the registered renter;
     mapping(address=> RegisteredRenter) registeredRenter;
+    
+    mapping (address =>uint) private arbitratorAddressIndexes;
    
-    constructor(address tokenAddress, address hotWalletAddress, uint commissionFees) public{
+
+    constructor() public{
         _ownerOfContract = msg.sender;
-        _tokenAddress = tokenAddress;
-        _hotWalletAddress = hotWalletAddress;
-        _commissionFees = commissionFees;
     }
     
-
+    /*Arbitrator Functions*/
+    function addArbitrator(address _arbitratorAddress) external {
+        require(msg.sender == _ownerOfContract);
+        arbitrators.push(_arbitratorAddress);
+        arbitratorAddressIndexes[_arbitratorAddress] = arbitrators.length-1;
+        emit ArbitratorAdded(msg.sender, _arbitratorAddress);
+    }
+    function deleteArbitrator(address _arbitratorAddress) external {
+        require(msg.sender == _ownerOfContract);
+        address arbitratorAddressAtLastIndex = arbitrators[arbitrators.length-1];
+        arbitrators[arbitratorAddressIndexes[_arbitratorAddress]] = arbitratorAddressAtLastIndex;
+        delete arbitratorAddressIndexes[_arbitratorAddress];
+        arbitrators.length--;
+        emit ArbitratorDeleted(msg.sender, _arbitratorAddress);
+    }
     
     /*Renter functions*/
     
@@ -84,7 +102,7 @@ contract RentalMainContract{
         
         //user allready registered
         if(registeredRenter[renterAddress].addressOfRenter == msg.sender){
-            emit RegisterRenter(msg.sender,false);
+            //emit RegisterRenter(msg.sender,false);
             revert();
         }else{
             registeredRenter[renterAddress].addressOfRenter = msg.sender;
@@ -174,13 +192,12 @@ contract RentalMainContract{
         currentRentOffersHash.length--;
     }
     
-    
     /*Rentee functions*/
     
     function takeRentOffer(bytes32 rentOfferHash, uint renteesGivenStartDate, uint renteesGivenEndDate) external{
         
         //Checks the current time which should be in between absolute start and absolute end date
-        require (now > rentals[rentOfferHash].startDate && now < rentals[rentOfferHash].endDate);
+        require (now < rentals[rentOfferHash].endDate);
         
         //Checks for proper time given by rentee
         require (renteesGivenStartDate > now && now < renteesGivenEndDate);
@@ -192,12 +209,12 @@ contract RentalMainContract{
         require(rentals[rentOfferHash].renterAddress != address(0));
         
         //Checks whether that same range exists in the rentals that were taken (Very important)
-        if(!(isDateRangeTakenInOffer(rentOfferHash,renteesGivenStartDate,renteesGivenEndDate))) revert();
+        if(isDateRangeTakenInOffer(rentOfferHash,renteesGivenStartDate,renteesGivenEndDate)) revert();
         
         makeEntryInRentalsTaken(rentOfferHash,renteesGivenStartDate,renteesGivenEndDate);
         
         //Start Escrow Here
-
+        
     }
     
     /*Helper Functions*/
