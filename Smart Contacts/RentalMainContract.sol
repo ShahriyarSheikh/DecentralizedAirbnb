@@ -2,7 +2,7 @@ pragma solidity ^0.4.16;
 
 library SystemDateTime{
     
-    function isDateInRange(uint currentDate, uint startDate, uint endDate) pure returns (bool){
+    function isDateInRange(uint currentDate, uint startDate, uint endDate) public pure returns (bool){
       if(currentDate >= startDate && currentDate <= endDate ) {
           return true ; 
       }
@@ -11,7 +11,7 @@ library SystemDateTime{
       
   }
   
-    function isDateSubsetInRange(uint startDate, uint endDate, uint absoluteStartDate, uint absoluteEndDate) pure returns (bool){
+    function isDateSubsetInRange(uint startDate, uint endDate, uint absoluteStartDate, uint absoluteEndDate) public pure returns (bool){
       require (absoluteStartDate < absoluteEndDate);
       
       if(absoluteStartDate < startDate && endDate < absoluteEndDate )
@@ -66,16 +66,16 @@ contract RentalMainContract{
     //Stores all the details of the registered renter;
     mapping(address=> RegisteredRenter) registeredRenter;
    
-   /*
     constructor(address tokenAddress, address hotWalletAddress, uint commissionFees) public{
         _ownerOfContract = msg.sender;
         _tokenAddress = tokenAddress;
         _hotWalletAddress = hotWalletAddress;
         _commissionFees = commissionFees;
     }
-    */
     
-    constructor(){}
+
+    
+    /*Renter functions*/
     
     function registerRenter(address renterAddress, bytes32 renterDetailsHash) external{
         
@@ -181,22 +181,39 @@ contract RentalMainContract{
         
         //Checks the current time which should be in between absolute start and absolute end date
         require (now > rentals[rentOfferHash].startDate && now < rentals[rentOfferHash].endDate);
+        
         //Checks for proper time given by rentee
         require (renteesGivenStartDate > now && now < renteesGivenEndDate);
+        
         //Checks the start date and the end date is in range is in range
         if(!(SystemDateTime.isDateSubsetInRange(renteesGivenStartDate,renteesGivenEndDate,rentals[rentOfferHash].startDate,rentals[rentOfferHash].endDate))) revert();
         
+        //Checks whether the renter address is present in the rentals (Useless imo)
         require(rentals[rentOfferHash].renterAddress != address(0));
-        //rentalsTaken[rentOfferHash]
         
-        //require(buyOffers[_tradeHash].sellerAddress == address(0));
-        //buyOffers[_tradeHash].sellerAddress = msg.sender;
+        //Checks whether that same range exists in the rentals that were taken (Very important)
+        if(!(isDateRangeTakenInOffer(rentOfferHash,renteesGivenStartDate,renteesGivenEndDate))) revert();
+        
+        makeEntryInRentalsTaken(rentOfferHash,renteesGivenStartDate,renteesGivenEndDate);
+        
+        //Start Escrow Here
+
     }
     
     /*Helper Functions*/
     
-    function isDateTakenInOffer(bytes32 rentOfferHash,uint startDate, uint endDate){
-        
+    function isDateRangeTakenInOffer(bytes32 rentOfferHash,uint startDate, uint endDate) private view returns (bool){
+        RenteeInfo[] storage renteeInfo = rentalsTaken[rentOfferHash];
+        for(uint i=0;i < renteeInfo.length; i++){
+           if(endDate < renteeInfo[i].startTimeOfRent || startDate >  renteeInfo[i].endTimeOfRent)
+            return true;
+        }
+        return false;
+    }
+    
+    function makeEntryInRentalsTaken(bytes32 rentOfferHash,uint startDate, uint endDate) private{
+        RenteeInfo[] storage renteeInfo = rentalsTaken[rentOfferHash];
+        renteeInfo.push(RenteeInfo(msg.sender,startDate,endDate));
     }
     
     
