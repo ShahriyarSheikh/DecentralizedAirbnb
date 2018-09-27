@@ -1,5 +1,7 @@
 pragma solidity ^0.4.16;
 
+import "./RentalEscrowContract.sol";
+
 library SystemDateTime{
     
     function isDateInRange(uint currentDate, uint startDate, uint endDate) public pure returns (bool){
@@ -33,6 +35,8 @@ contract RentalMainContract{
     event RegisterRenter(address indexed caller, bool indexed registrationStatus);
     event ArbitratorAdded(address indexed caller, address indexed _arbitratorAddress);
     event ArbitratorDeleted(address indexed caller, address indexed _arbitratorAddressDeleted);
+    event EscrowContractCreatedForTrade(address indexed renterAddress, address indexed renteeAddress, 
+                                        address escrowAddress, bytes32 indexed tradeHash);
     
     /* Models */
     struct RentalOffer{
@@ -59,6 +63,7 @@ contract RentalMainContract{
     /* List of */
     bytes32[] currentRentOffersHash;
     address[] arbitrators;
+    address[] escrowContracts;
     
     /* Mapping */
     // address to position 
@@ -71,8 +76,10 @@ contract RentalMainContract{
     mapping(address=> RegisteredRenter) registeredRenter;
     
     mapping (address =>uint) private arbitratorAddressIndexes;
+    
+    mapping (bytes32 => address) private escrowAddressWithRespectToTradeHash;
    
-
+    /* Constructor */
     constructor() public{
         _ownerOfContract = msg.sender;
     }
@@ -214,10 +221,41 @@ contract RentalMainContract{
         makeEntryInRentalsTaken(rentOfferHash,renteesGivenStartDate,renteesGivenEndDate);
         
         //Start Escrow Here
+        createEscrowContract(rentOfferHash,
+                            rentals[rentOfferHash].renterAddress,
+                            msg.sender,
+                            rentals[rentOfferHash].arbitratorAddress,
+                            rentals[rentOfferHash].arbitratorFee,
+                            rentals[rentOfferHash].startDate,
+                            rentals[rentOfferHash].endDate,
+                            renteesGivenStartDate,
+                            renteesGivenEndDate,
+                            rentals[rentOfferHash].offeredQuantity);
         
     }
     
     /*Helper Functions*/
+    
+    function createEscrowContract (bytes32 rentOfferHash, 
+                                   address renterAddress, 
+                                   address renteeAddress, 
+                                   address arbitratorAddress, 
+                                   uint arbitratorFees,
+                                   uint startDateOfRent,
+                                   uint endDateOfRent,
+                                   uint renteesGivenStartDate,
+                                   uint renteesGivenEndDate,
+                                   uint offeredAmount) private {
+        
+        address escrowAddress;
+        escrowAddress = new RentalEscrowContract(rentOfferHash, renterAddress, renteeAddress, 
+                                                arbitratorAddress, arbitratorFees, startDateOfRent, 
+                                                endDateOfRent, renteesGivenStartDate,renteesGivenEndDate,
+                                                offeredAmount);
+        escrowContracts.push(escrowAddress);
+        escrowAddressWithRespectToTradeHash[rentOfferHash] = escrowAddress;
+        emit EscrowContractCreatedForTrade(renterAddress, renteeAddress, escrowAddress, rentOfferHash);
+    }
     
     function isDateRangeTakenInOffer(bytes32 rentOfferHash,uint startDate, uint endDate) private view returns (bool){
         RenteeInfo[] storage renteeInfo = rentalsTaken[rentOfferHash];
