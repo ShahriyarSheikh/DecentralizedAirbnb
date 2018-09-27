@@ -1,5 +1,27 @@
 pragma solidity ^0.4.16;
 
+library SystemDateTime{
+    
+    function isDateInRange(uint currentDate, uint startDate, uint endDate) pure returns (bool){
+      if(currentDate >= startDate && currentDate <= endDate ) {
+          return true ; 
+      }
+      else
+      return false;
+      
+  }
+  
+    function isDateSubsetInRange(uint startDate, uint endDate, uint absoluteStartDate, uint absoluteEndDate) pure returns (bool){
+      require (absoluteStartDate < absoluteEndDate);
+      
+      if(absoluteStartDate < startDate && endDate < absoluteEndDate )
+        return true ; 
+      else
+        return false;
+      
+  }
+}
+
 contract RentalMainContract{
     
     //Private variables
@@ -44,16 +66,16 @@ contract RentalMainContract{
     //Stores all the details of the registered renter;
     mapping(address=> RegisteredRenter) registeredRenter;
    
-   
+   /*
     constructor(address tokenAddress, address hotWalletAddress, uint commissionFees) public{
         _ownerOfContract = msg.sender;
         _tokenAddress = tokenAddress;
         _hotWalletAddress = hotWalletAddress;
         _commissionFees = commissionFees;
     }
+    */
     
-    
-    
+    constructor(){}
     
     function registerRenter(address renterAddress, bytes32 renterDetailsHash) external{
         
@@ -118,7 +140,7 @@ contract RentalMainContract{
         require(rentals[rentedOfferHash].renterAddress == msg.sender);
         
         //To check whether the place is already rented
-        require(rentalsTaken[rentedOfferHash].length == 0);
+        require(rentalsTaken[rentedOfferHash[0]].length == 0);
         
         bytes32 newRentedOfferHash = keccak256(abi.encodePacked(msg.sender, offeredQuantity, address(0), startDate, endDate,placeDetailsHash, "Modify"));
             
@@ -151,6 +173,32 @@ contract RentalMainContract{
         delete rentOfferIndexes[deleteRentOfferTradeHash];
         currentRentOffersHash.length--;
     }
+    
+    
+    /*Rentee functions*/
+    
+    function takeRentOffer(bytes32 rentOfferHash, uint renteesGivenStartDate, uint renteesGivenEndDate) external{
+        
+        //Checks the current time which should be in between absolute start and absolute end date
+        require (now > rentals[rentOfferHash].startDate && now < rentals[rentOfferHash].endDate);
+        //Checks for proper time given by rentee
+        require (renteesGivenStartDate > now && now < renteesGivenEndDate);
+        //Checks the start date and the end date is in range is in range
+        if(!(SystemDateTime.isDateSubsetInRange(renteesGivenStartDate,renteesGivenEndDate,rentals[rentOfferHash].startDate,rentals[rentOfferHash].endDate))) revert();
+        
+        require(rentals[rentOfferHash].renterAddress != address(0));
+        //rentalsTaken[rentOfferHash]
+        
+        //require(buyOffers[_tradeHash].sellerAddress == address(0));
+        //buyOffers[_tradeHash].sellerAddress = msg.sender;
+    }
+    
+    /*Helper Functions*/
+    
+    function isDateTakenInOffer(bytes32 rentOfferHash,uint startDate, uint endDate){
+        
+    }
+    
     
 }
 
