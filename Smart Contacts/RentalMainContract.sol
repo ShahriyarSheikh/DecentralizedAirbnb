@@ -162,10 +162,10 @@ contract RentalMainContract{
                              uint arbitratorFees) external {
         
         //To check that the owner is modifying the offer    
-        require(rentals[rentedOfferHash].renterAddress == msg.sender);
+        require(rentals[rentedOfferHash].renterAddress == msg.sender,"Only owner can modify the rent offer.");
         
         //To check whether the place is already rented
-        require(rentalsTaken[rentedOfferHash[0]].length == 0);
+        require(rentalsTaken[rentedOfferHash[0]].length == 0,"Cannot be modified due to it allready being rented");
         
         bytes32 newRentedOfferHash = keccak256(abi.encodePacked(msg.sender, offeredQuantity, address(0), startDate, endDate,placeDetailsHash, "Modify"));
             
@@ -183,9 +183,9 @@ contract RentalMainContract{
     
     function deleteRentOffer(bytes32 rentedOfferHash) external {
              
-        require(rentals[rentedOfferHash].renterAddress == msg.sender);
+        require(rentals[rentedOfferHash].renterAddress == msg.sender,"Only owner can delete the rent offer");
         //To check whether the place is already rented
-        require(rentalsTaken[rentedOfferHash].length == 0);
+        require(rentalsTaken[rentedOfferHash].length == 0,"Rented place exists, cannot delete until rent is completed.");
         
         delete rentals[rentedOfferHash];
         deleteRentOfferHash(rentedOfferHash);
@@ -204,16 +204,16 @@ contract RentalMainContract{
     function takeRentOffer(bytes32 rentOfferHash, uint renteesGivenStartDate, uint renteesGivenEndDate) external{
         
         //Checks the current time which should be in between absolute start and absolute end date
-        require (now < rentals[rentOfferHash].endDate);
+        require (block.timestamp < rentals[rentOfferHash].endDate,"Absolute end date has now passed");
         
         //Checks for proper time given by rentee
-        require (renteesGivenStartDate > now && now < renteesGivenEndDate);
+        require (renteesGivenStartDate > now && now < renteesGivenEndDate,"Dates given by rentee are invalid.");
         
-        //Checks the start date and the end date is in range is in range
+        //Checks the start date and the end date is in range
         if(!(SystemDateTime.isDateSubsetInRange(renteesGivenStartDate,renteesGivenEndDate,rentals[rentOfferHash].startDate,rentals[rentOfferHash].endDate))) revert();
         
         //Checks whether the renter address is present in the rentals (Useless imo)
-        require(rentals[rentOfferHash].renterAddress != address(0));
+        require(rentals[rentOfferHash].renterAddress != address(0),"Renter address empty");
         
         //Checks whether that same range exists in the rentals that were taken (Very important)
         if(isDateRangeTakenInOffer(rentOfferHash,renteesGivenStartDate,renteesGivenEndDate)) revert();
@@ -246,9 +246,10 @@ contract RentalMainContract{
                                    uint renteesGivenStartDate,
                                    uint renteesGivenEndDate,
                                    uint offeredAmount) private {
+                                       
+        //Add reusability of escrow addresses here
         
-        address escrowAddress;
-        escrowAddress = new RentalEscrowContract(rentOfferHash, renterAddress, renteeAddress, 
+        address escrowAddress = new RentalEscrowContract(rentOfferHash, renterAddress, renteeAddress, 
                                                 arbitratorAddress, arbitratorFees, startDateOfRent, 
                                                 endDateOfRent, renteesGivenStartDate,renteesGivenEndDate,
                                                 offeredAmount);
