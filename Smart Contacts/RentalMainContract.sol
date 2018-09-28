@@ -232,7 +232,7 @@ contract RentalMainContract{
                             renteesGivenEndDate,
                             rentals[rentOfferHash].offeredQuantity);
         
-    }
+    } 
     
     /*Helper Functions*/
     
@@ -253,6 +253,8 @@ contract RentalMainContract{
                                                 arbitratorAddress, arbitratorFees, startDateOfRent, 
                                                 endDateOfRent, renteesGivenStartDate,renteesGivenEndDate,
                                                 offeredAmount);
+        //Should i send escrow amount (needed eth + security deposit) from here or ...                                        
+        
         escrowContracts.push(escrowAddress);
         escrowAddressWithRespectToTradeHash[rentOfferHash] = escrowAddress;
         emit EscrowContractCreatedForTrade(renterAddress, renteeAddress, escrowAddress, rentOfferHash);
