@@ -108,7 +108,7 @@ contract RentalMainContract{
         require(renterAddress == msg.sender,"Current user cannot register someone else");
         
         //user allready registered
-        if(registeredRenter[renterAddress].addressOfRenter == msg.sender){
+        if(registeredRenter[msg.sender].addressOfRenter == msg.sender){
             //emit RegisterRenter(msg.sender,false);
             revert();
         }else{
@@ -126,7 +126,7 @@ contract RentalMainContract{
                             bytes32 placeDetailsHash,
                             uint arbitratorFees) external {
                                 
-        //TO CHECK IF THE OFFER IS PLACED by a registerd renter                        
+        //To check if the offer is placed by a registerd renter                        
         require(registeredRenter[msg.sender].addressOfRenter == msg.sender,"Not a registered renter");
         
         //Date validations
@@ -143,6 +143,8 @@ contract RentalMainContract{
         rentals[rentOfferHash].arbitratorAddress = arbitratorAddress;
         rentals[rentOfferHash].arbitratorFee = arbitratorFees;
         rentals[rentOfferHash].placeDetailsHash = placeDetailsHash;
+        rentals[rentOfferHash].startDate = startDate;
+        rentals[rentOfferHash].endDate = endDate;
         
         //An array that keep tracks of the current rent offers by hash
         currentRentOffersHash.push(rentOfferHash);
@@ -152,6 +154,7 @@ contract RentalMainContract{
         
         emit RentOfferPlaced(msg.sender, rentOfferHash);
     }
+    
 
     function modifyRentOffer(bytes32 rentedOfferHash,
                              uint offeredQuantity, 
@@ -182,7 +185,10 @@ contract RentalMainContract{
     }    
     
     function deleteRentOffer(bytes32 rentedOfferHash) external {
-             
+        
+        //To check whether any hash exists
+        require(rentals[rentedOfferHash].renterAddress != address(0),"No such hash exists");
+        
         require(rentals[rentedOfferHash].renterAddress == msg.sender,"Only owner can delete the rent offer");
         //To check whether the place is already rented
         require(rentalsTaken[rentedOfferHash].length == 0,"Rented place exists, cannot delete until rent is completed.");
@@ -199,21 +205,29 @@ contract RentalMainContract{
         currentRentOffersHash.length--;
     }
     
-    /*Rentee functions*/
+    /* Renter Helper functions */
+    
+    function isUserARegisteredRenter(address userAddress) external view returns(bool){
+        if(registeredRenter[userAddress].addressOfRenter != address(0))
+            return true;
+        return false;
+    }
+    
+    /* Rentee functions */
     
     function takeRentOffer(bytes32 rentOfferHash, uint renteesGivenStartDate, uint renteesGivenEndDate) external{
         
+        //Checks whether the renter address is present in the rentals
+        require(rentals[rentOfferHash].renterAddress != address(0),"Offer does not exist i.e. renter address empty");
+        
         //Checks the current time which should be in between absolute start and absolute end date
-        require (block.timestamp < rentals[rentOfferHash].endDate,"Absolute end date has now passed");
+        require (block.timestamp > rentals[rentOfferHash].endDate,"Absolute end date has now passed");
         
         //Checks for proper time given by rentee
         require (renteesGivenStartDate > now && now < renteesGivenEndDate,"Dates given by rentee are invalid.");
         
         //Checks the start date and the end date is in range
         if(!(SystemDateTime.isDateSubsetInRange(renteesGivenStartDate,renteesGivenEndDate,rentals[rentOfferHash].startDate,rentals[rentOfferHash].endDate))) revert();
-        
-        //Checks whether the renter address is present in the rentals (Useless imo)
-        require(rentals[rentOfferHash].renterAddress != address(0),"Renter address empty");
         
         //Checks whether that same range exists in the rentals that were taken (Very important)
         if(isDateRangeTakenInOffer(rentOfferHash,renteesGivenStartDate,renteesGivenEndDate)) revert();
