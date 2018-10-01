@@ -221,7 +221,7 @@ contract RentalMainContract{
         require(rentals[rentOfferHash].renterAddress != address(0),"Offer does not exist i.e. renter address empty");
         
         //Checks the current time which should be in between absolute start and absolute end date
-        require (block.timestamp > rentals[rentOfferHash].endDate,"Absolute end date has now passed");
+        require (block.timestamp < rentals[rentOfferHash].endDate,"Absolute end date has now passed");
         
         //Checks for proper time given by rentee
         require (renteesGivenStartDate > now && now < renteesGivenEndDate,"Dates given by rentee are invalid.");
@@ -277,8 +277,9 @@ contract RentalMainContract{
     function isDateRangeTakenInOffer(bytes32 rentOfferHash,uint startDate, uint endDate) private view returns (bool){
         RenteeInfo[] storage renteeInfo = rentalsTaken[rentOfferHash];
         for(uint i=0;i < renteeInfo.length; i++){
-           if(endDate < renteeInfo[i].startTimeOfRent || startDate >  renteeInfo[i].endTimeOfRent)
-            return true;
+            if(!((startDate <= renteeInfo[i].startTimeOfRent && endDate <= renteeInfo[i].startTimeOfRent) || 
+            (startDate >= renteeInfo[i].endTimeOfRent && endDate >= renteeInfo[i].endTimeOfRent)))
+                return true;
         }
         return false;
     }
@@ -286,6 +287,11 @@ contract RentalMainContract{
     function makeEntryInRentalsTaken(bytes32 rentOfferHash,uint startDate, uint endDate) private{
         RenteeInfo[] storage renteeInfo = rentalsTaken[rentOfferHash];
         renteeInfo.push(RenteeInfo(msg.sender,startDate,endDate));
+    }
+    
+    function getAllRentedDatesAgainstHash(bytes32 rentOfferHash, uint indexOfArray) external view returns (address,uint,uint,uint){
+        RenteeInfo[] storage renteeInfo = rentalsTaken[rentOfferHash];
+        return (renteeInfo[indexOfArray].addressOfRentee,renteeInfo[indexOfArray].startTimeOfRent,renteeInfo[indexOfArray].endTimeOfRent,rentalsTaken[rentOfferHash].length);
     }
     
     
