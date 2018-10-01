@@ -27,6 +27,7 @@ contract RentalEscrowContract {
     event RecievedFromRentee(address indexed caller, address indexed renterAddress, uint indexed valueReceived);
     event EscrowReleasedFromRentee(address indexed caller);
     event EscrowAmountCollectedByRenter(address indexed caller);
+    event RenteeHasRaisedDispute(address indexed caller);
     
     /* Constructor */
     constructor(bytes32 rentOfferHash, 
@@ -62,7 +63,7 @@ contract RentalEscrowContract {
         emit RecievedFromRentee(msg.sender, _renterAddress, msg.value);
     }
     
-    function releaseEscrowFundsByRentee() external payable {
+    function releaseEscrowFundsByRentee() external {
         require(_renteeAddress == msg.sender,"Given account cannot perform this action");
         require(now > _renteesGivenEndDate,"Rent has not ended yet");
         lock();
@@ -74,7 +75,7 @@ contract RentalEscrowContract {
         emit EscrowReleasedFromRentee(_renteeAddress);
     }
     
-    function collectEscrowFundsByRenter()external payable {
+    function collectEscrowFundsByRenter()external {
         require(_renterAddress == msg.sender,"Given account cannot perform this action");
         require(_hasRenteeReleasedEscrow,"Rentee needs to release the escrow first");
         lock();
@@ -84,6 +85,18 @@ contract RentalEscrowContract {
         unlock();
         
         emit EscrowReleasedFromRentee(_renterAddress);
+    }
+    
+    function raiseDisputeByRenter() external {
+        require(block.timestamp < _renteesGivenEndDate,"Rent has ended, cannot raise dispute now");
+        require(_hasRenteeReleasedEscrow,"Cannot raise dispute once collected security deposit");
+        require(_hasRenterCollectedFunds,"Cannot raise dispute once escrow has ended");
+        
+        emit RenteeHasRaisedDispute(msg.sender);
+    }
+    
+    function raiseDisputeByRentee() external {
+        require(block.timestamp < _renteesGivenEndDate,"Rent has ended, cannot raise dispute now");
     }
     
     /* Arbitrator Functions */
