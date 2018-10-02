@@ -28,6 +28,7 @@ contract RentalMainContract{
     
     /* Private Variables */
     address private _ownerOfContract;
+    uint private _fixedSecurityDeposit = .01 ether;
     
     /* Events */
     event RentOfferPlaced(address indexed caller, bytes32 indexed rentOfferHash);
@@ -78,6 +79,12 @@ contract RentalMainContract{
     mapping (address =>uint) private arbitratorAddressIndexes;
     
     mapping (bytes32 => address) private escrowAddressWithRespectToTradeHash;
+    
+    /* Modifiers */
+    modifier OnlyOwner(){
+        require(_ownerOfContract == msg.sender);
+        _;
+    }
    
     /* Constructor */
     constructor() public{
@@ -266,12 +273,16 @@ contract RentalMainContract{
         address escrowAddress = new RentalEscrowContract(rentOfferHash, renterAddress, renteeAddress, 
                                                 arbitratorAddress, arbitratorFees, startDateOfRent, 
                                                 endDateOfRent, renteesGivenStartDate,renteesGivenEndDate,
-                                                offeredAmount);
+                                                offeredAmount,_fixedSecurityDeposit);
         //Should i send escrow amount (needed eth + security deposit) from here or ...                                        
         
         escrowContracts.push(escrowAddress);
         escrowAddressWithRespectToTradeHash[rentOfferHash] = escrowAddress;
         emit EscrowContractCreatedForTrade(renterAddress, renteeAddress, escrowAddress, rentOfferHash);
+    }
+    
+    function setSecurityDeposit(uint securityDeposit) OnlyOwner external {
+        _fixedSecurityDeposit = securityDeposit;
     }
     
     function isDateRangeTakenInOffer(bytes32 rentOfferHash,uint startDate, uint endDate) private view returns (bool){

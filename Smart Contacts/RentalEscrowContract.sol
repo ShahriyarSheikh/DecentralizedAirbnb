@@ -17,7 +17,7 @@ contract RentalEscrowContract {
     uint _offeredAmount;
     uint private _lockedSecurityDeposit;
     uint private _lockedRenteeDeposit;
-    uint private _fixedSecurityDeposit = 2 ether;
+    uint private _fixedSecurityDeposit;
     
     bool private _locked = false;
     bool private _hasRenteeReleasedEscrow;
@@ -47,7 +47,8 @@ contract RentalEscrowContract {
                 uint endDateOfRent,
                 uint renteesGivenStartDate,
                 uint renteesGivenEndDate,
-                uint offeredAmount) public {
+                uint offeredAmount,
+                uint fixedSecurityDeposit) public {
         _ownerOfEscrowContract = tx.origin;
         _rentOfferHash = rentOfferHash;
         _renterAddress = renterAddress;
@@ -59,6 +60,7 @@ contract RentalEscrowContract {
         _renteesGivenStartDate = renteesGivenStartDate;
         _renteesGivenEndDate = renteesGivenEndDate;
         _offeredAmount = offeredAmount;
+        _fixedSecurityDeposit = fixedSecurityDeposit;
     }
     
     modifier onlyArbitrator(){
@@ -159,7 +161,6 @@ contract RentalEscrowContract {
         
     }
     
-    
     /* Helper Functions */
     
     function lock() private{
@@ -172,6 +173,5 @@ contract RentalEscrowContract {
     function unlock() private{
         _locked = false;
     }
-    
     
 }
