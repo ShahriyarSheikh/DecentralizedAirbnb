@@ -20,14 +20,22 @@ contract RentalEscrowContract {
     uint private _fixedSecurityDeposit = 2 ether;
     
     bool private _locked = false;
-    bool private _hasRenteeReleasedEscrow = false;
-    bool private _hasRenterCollectedFunds = false;
+    bool private _hasRenteeReleasedEscrow;
+    bool private _hasRenterCollectedFunds;
+    bool private _hasRenterRaisedDispute;
+    bool private _hasRenteeRaisedDispute;
+    bool private _hasArbitratorAgreedWithRenter;
+    bool private _hasArbitratorAgreedWithRentee;
     
     /* Events */
     event RecievedFromRentee(address indexed caller, address indexed renterAddress, uint indexed valueReceived);
     event EscrowReleasedFromRentee(address indexed caller);
+    event EscrowReleasedFromRenter(address indexed caller);
     event EscrowAmountCollectedByRenter(address indexed caller);
     event RenteeHasRaisedDispute(address indexed caller);
+    event RenterHasRaisedDispute(address indexed caller);
+    event ArbitratorHasAgreedWithRenter(address indexed caller, address indexed renterAddress);
+    event ArbitratorHasAgreedWithRentee(address indexed caller, address indexed renteeAddress);
     
     /* Constructor */
     constructor(bytes32 rentOfferHash, 
@@ -53,6 +61,11 @@ contract RentalEscrowContract {
         _offeredAmount = offeredAmount;
     }
     
+    modifier onlyArbitrator(){
+        require(msg.sender == _arbitratorAddress,"Only arbitrator can perform these functions");
+        _;
+    }
+    
     /* Escrow Functions */
     //Need to audit this, not sure if it works
     function depositForRentee() external payable {
@@ -65,45 +78,86 @@ contract RentalEscrowContract {
     
     function releaseEscrowFundsByRentee() external {
         require(_renteeAddress == msg.sender,"Given account cannot perform this action");
-        require(now > _renteesGivenEndDate,"Rent has not ended yet");
-        lock();
-        _renteeAddress.transfer(_lockedSecurityDeposit);
-        _lockedSecurityDeposit = 0;
+        require(block.timestamp > _renteesGivenEndDate,"Rent has not ended yet");
+
         _hasRenteeReleasedEscrow = true;
-        unlock();
         
         emit EscrowReleasedFromRentee(_renteeAddress);
     }
     
-    function collectEscrowFundsByRenter()external {
+    function collectEscrowFundsByRenter() external {
         require(_renterAddress == msg.sender,"Given account cannot perform this action");
-        require(_hasRenteeReleasedEscrow,"Rentee needs to release the escrow first");
+        //Check end time 
+        require(block.timestamp > _renteesGivenEndDate,"Cannot collect funds until rent time has ended");
+        //Check if the rentee is satisfied with the outcome
+        require(_hasRenteeReleasedEscrow,"Rentee has not released the escrow yet");
+        
         lock();
         _renterAddress.transfer(_lockedRenteeDeposit);
+        _renteeAddress.transfer(_lockedSecurityDeposit);
         _lockedRenteeDeposit = 0;
+        _lockedSecurityDeposit = 0;
         _hasRenterCollectedFunds = true;
         unlock();
         
-        emit EscrowReleasedFromRentee(_renterAddress);
+        emit EscrowReleasedFromRenter(_renterAddress);
     }
     
     function raiseDisputeByRenter() external {
-        require(block.timestamp < _renteesGivenEndDate,"Rent has ended, cannot raise dispute now");
-        require(_hasRenteeReleasedEscrow,"Cannot raise dispute once collected security deposit");
         require(_hasRenterCollectedFunds,"Cannot raise dispute once escrow has ended");
         
-        emit RenteeHasRaisedDispute(msg.sender);
+        require(_hasRenteeRaisedDispute,"Rentee has already raised dispute");
+        _hasRenterRaisedDispute = true;
+        emit RenterHasRaisedDispute(msg.sender);
     }
     
     function raiseDisputeByRentee() external {
+        //Meaning that after rent has completed, you cannot raise a dispute
         require(block.timestamp < _renteesGivenEndDate,"Rent has ended, cannot raise dispute now");
+        require(_hasRenteeReleasedEscrow,"Cannot raise dispute after releasing escrow");
+        require(_hasRenterCollectedFunds,"Cannot raise dispute after renter has collected the funds");
+        require(_hasRenterRaisedDispute,"Renter has already raised dispute");
+        
+        _hasRenteeRaisedDispute = true;
+        
+        emit RenteeHasRaisedDispute(msg.sender);
+        
     }
     
     /* Arbitrator Functions */
     //Releases the funds given by the rentee to the renter
-    function signForRenter() external pure {}
+    function signForRenter() onlyArbitrator external payable {
+        require(!(_hasArbitratorAgreedWithRenter),"Arbitrator has already signed for renter");
+        require(!(_hasArbitratorAgreedWithRentee),"Arbitrator has already agreed with rentee");
+        require(address(this).balance >= _arbitratorFees,"Arbitrator fee is insufficient");
+        
+        _hasArbitratorAgreedWithRenter = true;
+        
+        //Calculations for Renter
+        lock();
+        _arbitratorAddress.transfer(address(this).balance - (address(this).balance - _arbitratorFees));
+        _renterAddress.transfer(address(this).balance);
+        unlock();
+        
+        emit ArbitratorHasAgreedWithRenter(msg.sender,_renterAddress);
+    }
     //Releases the Security deposit submitted by the rentee
-    function signForRentee() external pure {}
+    function signForRentee() onlyArbitrator external payable {
+        require(!(_hasArbitratorAgreedWithRenter),"Arbitrator has already signed for renter");
+        require(!(_hasArbitratorAgreedWithRentee),"Arbitrator has already agreed with rentee");
+        require(address(this).balance >= _arbitratorFees,"Arbitrator fee is insufficient");
+        
+        _hasArbitratorAgreedWithRentee = true;
+        
+        //Calculations for rentee
+        lock();
+        _arbitratorAddress.transfer(address(this).balance - (address(this).balance - _arbitratorFees));
+        _renteeAddress.transfer(address(this).balance);
+        unlock();
+        
+        emit ArbitratorHasAgreedWithRentee(msg.sender,_renterAddress);
+        
+    }
     
     
     /* Helper Functions */

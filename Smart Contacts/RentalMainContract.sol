@@ -84,7 +84,7 @@ contract RentalMainContract{
         _ownerOfContract = msg.sender;
     }
     
-    /*Arbitrator Functions*/
+    /* Arbitrator Functions */
     function addArbitrator(address _arbitratorAddress) external {
         require(msg.sender == _ownerOfContract);
         arbitrators.push(_arbitratorAddress);
@@ -100,7 +100,7 @@ contract RentalMainContract{
         emit ArbitratorDeleted(msg.sender, _arbitratorAddress);
     }
     
-    /*Renter functions*/
+    /* Renter functions */
     
     function registerRenter(address renterAddress, bytes32 renterDetailsHash) external{
         
@@ -248,7 +248,7 @@ contract RentalMainContract{
         
     } 
     
-    /*Helper Functions*/
+    /* Helper Functions */
     
     function createEscrowContract (bytes32 rentOfferHash, 
                                    address renterAddress, 
@@ -288,6 +288,8 @@ contract RentalMainContract{
         RenteeInfo[] storage renteeInfo = rentalsTaken[rentOfferHash];
         renteeInfo.push(RenteeInfo(msg.sender,startDate,endDate));
     }
+    
+    //To check the array, need to remove after using;
     
     function getAllRentedDatesAgainstHash(bytes32 rentOfferHash, uint indexOfArray) external view returns (address,uint,uint,uint){
         RenteeInfo[] storage renteeInfo = rentalsTaken[rentOfferHash];
