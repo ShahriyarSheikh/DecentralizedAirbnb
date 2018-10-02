@@ -130,7 +130,7 @@ contract RentalMainContract{
         require(registeredRenter[msg.sender].addressOfRenter == msg.sender,"Not a registered renter");
         
         //Date validations
-        require(startDate > now && now < endDate,"Invalid date entry");
+        require(startDate > block.timestamp && block.timestamp < endDate,"Invalid date entry");
         require(startDate < endDate,"Starting date cannot be greater than ending date");
         
         bytes32 rentOfferHash = keccak256(abi.encodePacked(msg.sender, offeredQuantity, startDate, endDate,placeDetailsHash, "Sell"));
@@ -168,7 +168,7 @@ contract RentalMainContract{
         require(rentals[rentedOfferHash].renterAddress == msg.sender,"Only owner can modify the rent offer.");
         
         //To check whether the place is already rented
-        require(rentalsTaken[rentedOfferHash[0]].length == 0,"Cannot be modified due to it allready being rented");
+        require(rentalsTaken[rentedOfferHash[0]].length == 0,"Cannot be modified due to it already being rented");
         
         bytes32 newRentedOfferHash = keccak256(abi.encodePacked(msg.sender, offeredQuantity, address(0), startDate, endDate,placeDetailsHash, "Modify"));
             
@@ -227,10 +227,10 @@ contract RentalMainContract{
         require (renteesGivenStartDate > now && now < renteesGivenEndDate,"Dates given by rentee are invalid.");
         
         //Checks the start date and the end date is in range
-        if(!(SystemDateTime.isDateSubsetInRange(renteesGivenStartDate,renteesGivenEndDate,rentals[rentOfferHash].startDate,rentals[rentOfferHash].endDate))) revert();
+        if(!(SystemDateTime.isDateSubsetInRange(renteesGivenStartDate,renteesGivenEndDate,rentals[rentOfferHash].startDate,rentals[rentOfferHash].endDate))) revert("Range is not available in the rent");
         
         //Checks whether that same range exists in the rentals that were taken (Very important)
-        if(isDateRangeTakenInOffer(rentOfferHash,renteesGivenStartDate,renteesGivenEndDate)) revert();
+        if(isDateRangeTakenInOffer(rentOfferHash,renteesGivenStartDate,renteesGivenEndDate)) revert("Date range is taken in offer");
         
         makeEntryInRentalsTaken(rentOfferHash,renteesGivenStartDate,renteesGivenEndDate);
         
