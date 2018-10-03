@@ -133,12 +133,13 @@ contract RentalEscrowContract {
         require(!(_hasArbitratorAgreedWithRentee),"Arbitrator has already agreed with rentee");
         require(address(this).balance >= _arbitratorFees,"Arbitrator fee is insufficient");
         
-        _hasArbitratorAgreedWithRenter = true;
+        
         
         //Calculations for Renter
         lock();
         _arbitratorAddress.transfer(address(this).balance - (address(this).balance - _arbitratorFees));
         _renterAddress.transfer(address(this).balance);
+        _hasArbitratorAgreedWithRenter = true;
         unlock();
         
         emit ArbitratorHasAgreedWithRenter(msg.sender,_renterAddress);
@@ -149,12 +150,13 @@ contract RentalEscrowContract {
         require(!(_hasArbitratorAgreedWithRentee),"Arbitrator has already agreed with rentee");
         require(address(this).balance >= _arbitratorFees,"Arbitrator fee is insufficient");
         
-        _hasArbitratorAgreedWithRentee = true;
+        
         
         //Calculations for rentee
         lock();
         _arbitratorAddress.transfer(address(this).balance - (address(this).balance - _arbitratorFees));
         _renteeAddress.transfer(address(this).balance);
+        _hasArbitratorAgreedWithRentee = true;
         unlock();
         
         emit ArbitratorHasAgreedWithRentee(msg.sender,_renterAddress);
