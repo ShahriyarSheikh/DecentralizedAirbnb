@@ -40,3 +40,4 @@ Thumbs.db
 
 #Other files
 package-lock.json
+/build
