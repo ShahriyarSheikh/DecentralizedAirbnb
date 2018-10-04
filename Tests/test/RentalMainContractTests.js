@@ -52,6 +52,7 @@ contract('RentalMainContract', function (accounts) {
       offer.arbitratorFees = web3.utils.toWei("0.0001", 'ether');
       var res = await demoContract.placeRentOffer(offer.offeredAmount, offer.startDate, offer.endDate, offer.arbitratorAddress, offer.rentalDetailsHash, offer.arbitratorFees);
       rentOfferHash = res.logs[0].args.rentOfferHash;
+      console.log("Rent offer is: " + rentOfferHash);
       listOfOffers.push(offer);
 
     });
@@ -61,10 +62,9 @@ contract('RentalMainContract', function (accounts) {
     it("should modify an existing rent offer", async () => {
       
       console.log("Going to modify the offer: " + rentOfferHash)
-      console.log(demoContract);
-      var response = await demoContract.modifyRentOffer(rentOfferHash, offer.startDate, offer.endDate, offer.arbitratorAddress, offer.rentalDetailsHash, offer.arbitratorFees);
-      rentOfferHash = res.logs[0].args.rentOfferHash;
-      console.log(rentOfferHash);
+      var response = await demoContract.modifyRentOffer(rentOfferHash,offer.offeredAmount, offer.startDate, offer.endDate, offer.arbitratorAddress, offer.rentalDetailsHash, offer.arbitratorFees);
+      rentOfferHash = response.logs[0].args.rentOfferHash;
+      console.log("New Rent Offer Hash is: " + rentOfferHash);
     })
   });
 
