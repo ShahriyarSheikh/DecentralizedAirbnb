@@ -1,3 +1,3 @@
-# MetaCoin Truffle Box
+# Truffle tests for Decentralized Airbnb
 
-MetaCoin example Truffle project
+Here i am using truffle framework to test the smart contracts by writing automated scripts that test the entire procedure automatically.
