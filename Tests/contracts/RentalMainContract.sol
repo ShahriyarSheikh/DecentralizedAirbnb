@@ -184,7 +184,7 @@ contract RentalMainContract{
         rentOffer.renterAddress = msg.sender;
         rentOffer.arbitratorAddress = arbitratorAddress;
         rentOffer.arbitratorFee = arbitratorFees;
-        rentOffer.placeDetailsHash = newRentedOfferHash;
+        rentOffer.placeDetailsHash = placeDetailsHash;
         currentRentOffersHash[rentOfferIndexes[rentedOfferHash]] = newRentedOfferHash;
         
         emit RentOfferModified(msg.sender,newRentedOfferHash);
@@ -298,8 +298,7 @@ contract RentalMainContract{
     function makeEntryInRentalsTaken(bytes32 rentOfferHash,uint startDate, uint endDate) private{
         RenteeInfo[] storage renteeInfo = rentalsTaken[rentOfferHash];
         renteeInfo.push(RenteeInfo(msg.sender,startDate,endDate));
-    }
-    
+    } 
     
 }
 
