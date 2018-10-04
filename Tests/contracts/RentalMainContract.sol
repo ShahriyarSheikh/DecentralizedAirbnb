@@ -177,7 +177,7 @@ contract RentalMainContract{
         //To check whether the place is already rented
         require(rentalsTaken[rentedOfferHash[0]].length == 0,"Cannot be modified due to it already being rented");
         
-        bytes32 newRentedOfferHash = keccak256(abi.encodePacked(msg.sender, offeredQuantity, address(0), startDate, endDate,placeDetailsHash, "Modify"));
+        bytes32 newRentedOfferHash = keccak256(abi.encodePacked(msg.sender, offeredQuantity, startDate, endDate,placeDetailsHash, "Modify"));
             
         RentalOffer storage rentOffer = rentals[newRentedOfferHash];
         rentOffer.offeredQuantity = offeredQuantity;
@@ -299,6 +299,7 @@ contract RentalMainContract{
         RenteeInfo[] storage renteeInfo = rentalsTaken[rentOfferHash];
         renteeInfo.push(RenteeInfo(msg.sender,startDate,endDate));
     }
+    
     
 }
 
