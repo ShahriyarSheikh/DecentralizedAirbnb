@@ -117,7 +117,7 @@ contract RentalMainContract{
         //user allready registered
         if(registeredRenter[msg.sender].addressOfRenter == msg.sender){
             //emit RegisterRenter(msg.sender,false);
-            revert();
+            revert("User Already Registered");
         }else{
             registeredRenter[renterAddress].addressOfRenter = msg.sender;
             registeredRenter[renterAddress].renterDetails = renterDetailsHash;
@@ -299,14 +299,6 @@ contract RentalMainContract{
         RenteeInfo[] storage renteeInfo = rentalsTaken[rentOfferHash];
         renteeInfo.push(RenteeInfo(msg.sender,startDate,endDate));
     }
-    
-    //To check the array, need to remove after using;
-    
-    function getAllRentedDatesAgainstHash(bytes32 rentOfferHash, uint indexOfArray) external view returns (address,uint,uint,uint){
-        RenteeInfo[] storage renteeInfo = rentalsTaken[rentOfferHash];
-        return (renteeInfo[indexOfArray].addressOfRentee,renteeInfo[indexOfArray].startTimeOfRent,renteeInfo[indexOfArray].endTimeOfRent,rentalsTaken[rentOfferHash].length);
-    }
-    
     
 }
 
