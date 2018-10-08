@@ -71,6 +71,7 @@ contract RentalEscrowContract {
     /* Escrow Functions */
     //Need to audit this, not sure if it works
     function depositForRentee() external payable {
+        require(_lockedRenteeDeposit == 0,"Amount already given by rentee");
         require(_renteeAddress == msg.sender,"Given account cannot perform this action");
         require(_offeredAmount + _fixedSecurityDeposit == msg.value, "Expected an amount of offered quantiy, but does not match the amount sent");
         _lockedSecurityDeposit = msg.value - (msg.value - _fixedSecurityDeposit);
@@ -149,8 +150,6 @@ contract RentalEscrowContract {
         require(!(_hasArbitratorAgreedWithRenter),"Arbitrator has already signed for renter");
         require(!(_hasArbitratorAgreedWithRentee),"Arbitrator has already agreed with rentee");
         require(address(this).balance >= _arbitratorFees,"Arbitrator fee is insufficient");
-        
-        
         
         //Calculations for rentee
         lock();

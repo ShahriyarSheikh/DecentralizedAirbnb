@@ -16,7 +16,7 @@ var escrow = {rentOfferHash:"0xda522c276b001588cb7b0fff06ae827ecd0008b8cfe546746
                         renteesGivenStartDate:getDate("Oct 05,2019"),
                         renteesGivenEndDate:getDate("Oct 07,2019"),
                         offeredAmount:web3.utils.toWei("1","ether"),
-                        fixedSecurityDeposit:web3.utils.toWei("0.001","ether")}
+                        fixedSecurityDeposit:web3.utils.toWei("0.1","ether")}
 
 module.exports = function(deployer) {
   deployer.deploy(SystemDateTime);
