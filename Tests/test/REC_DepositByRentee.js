@@ -10,14 +10,18 @@ contract('RentalEscrowContract', function (accounts) {
         _accounts = accounts;
     })
 
+  });
+
+
+  describe("DESCRIBE: Deposit an amount in the escrow contract", function () {
+
     it("Should deposit some amount in the escrow",async() =>{
         var response = await MockContract.depositForRentee({value: web3.toWei("1.1", 'ether')});
         console.log(response);
     });
     
-
-
   });
+
 
 
 });
